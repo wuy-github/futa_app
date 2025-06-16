@@ -1,4 +1,3 @@
-// src/pages/ContactPage.jsx
 import React, { useState } from "react";
 import { FaEnvelope, FaChevronDown, FaChevronRight } from "react-icons/fa";
 
@@ -23,7 +22,7 @@ function ContactPage() {
     }));
   };
 
-  //   cai này là để cho m xem xem nó gửi được chauw
+  //   Cai này là để cho m xem xem nó gửi được chauw
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Contact form submitted:", formData);
@@ -73,7 +72,6 @@ function ContactPage() {
                 </div>
               </button>
 
-              {/* Nội dung chi tiết - được hiển thị khi isInfoOpen là true */}
               <div
                 className={`transition-all duration-500 ease-in-out overflow-hidden ${
                   isInfoOpen ? "max-h-[1000px] mt-4" : "max-h-0"
@@ -128,16 +126,13 @@ function ContactPage() {
                 </div>
               </div>
             </div>
-            {/* Bạn có thể thêm các mục đóng/mở khác ở đây nếu muốn */}
           </div>
 
-          {/* Cột Phải: Form Liên hệ - Đã được style lại */}
           <div className="bg-gray-50 p-6 md:p-8 rounded-xl shadow-lg">
             {" "}
-            {/* Thay đổi shadow và bo góc */}
             <div className="flex items-center gap-3 mb-6">
-              <FaEnvelope className="w-6 h-6 text-orange-500" />
-              <h2 className="text-xl font-bold text-orange-500">
+              <FaEnvelope className="w-6 h-6 " style={{ color: "#00613D" }} />
+              <h2 className="text-xl font-bold " style={{ color: "#00613D" }}>
                 Gửi thông tin liên hệ đến chúng tôi
               </h2>
             </div>
@@ -207,7 +202,6 @@ function ContactPage() {
                   rows="5"
                   className={`${inputClasses} h-auto resize-none`}
                 ></textarea>{" "}
-                {/* Tăng rows và bỏ resize */}
               </div>
               <div className="pt-2">
                 {" "}

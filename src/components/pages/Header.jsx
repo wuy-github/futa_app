@@ -212,6 +212,13 @@ function Header() {
                   >
                     {item}
                   </Link>
+                ) : item === "LỊCH TRÌNH" ? (
+                  <Link
+                    to="/lich-trinh"
+                    className="py-3 block border-b-2 border-transparent hover:border-b-2 hover:border-white"
+                  >
+                    {item}
+                  </Link>
                 ) : (
                   <a
                     href="#"

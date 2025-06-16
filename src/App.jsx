@@ -8,6 +8,7 @@ import LoginPage from "./components/pages/LoginPage";
 import ContactPage from "./components/pages/ContactPage";
 import Footer from "./components/pages/Footer";
 import AboutUsPage from "./components/pages/AboutUsPage";
+import TimeLinePage from "./components/pages/TimeLinePage";
 import TicketLookupPage from "./components/pages/TicketLookupPage";
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/lien-he" element={<ContactPage />} />
             <Route path="/ve-chung-toi" element={<AboutUsPage />} />
             <Route path="/tra-cuu-ve" element={<TicketLookupPage />} />
+            <Route path="/lich-trinh" element={<TimeLinePage />} />
           </Routes>
         </main>
         <Footer />
