@@ -8,6 +8,7 @@ import LoginPage from "./components/pages/LoginPage";
 import ContactPage from "./components/pages/ContactPage";
 import ConnectFutaGroupSection from "./components/pages/ConnectFutaGroupSection";
 import Footer from "./components/pages/Footer";
+import AboutUsPage from "./components/pages/AboutUsPage";
 function App() {
   return (
     <BrowserRouter>
@@ -21,6 +22,7 @@ function App() {
             <Route path="/" element={<Homepage />} />
             <Route path="/dang-nhap" element={<LoginPage />} />
             <Route path="/lien-he" element={<ContactPage />} />
+            <Route path="/ve-chung-toi" element={<AboutUsPage />} />
           </Routes>
         </main>
         <Footer />

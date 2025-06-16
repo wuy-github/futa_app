@@ -11,7 +11,7 @@ function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           {/* Cột 1: Thông tin công ty và liên hệ chính */}
           <div className="text-center md:text-left">
-            <h3 className="font-semibold text-orange-500 text-base mb-2">
+            <h3 className="font-semibold text-orange-700 text-base mb-2">
               CÔNG TY CỔ PHẦN XE KHÁCH PHƯƠNG TRANG - FUTA BUS LINES
             </h3>
             <p className="text-xs text-gray-500 mb-1">
@@ -38,7 +38,7 @@ function Footer() {
           <div className="text-center md:text-left md:mx-auto">
             {" "}
             {/* Căn giữa cột này trên desktop */}
-            <h3 className="font-semibold text-orange-500 text-base mb-3">
+            <h3 className="font-semibold text-orange-700 text-base mb-3">
               Liên kết hữu ích
             </h3>
             <nav className="space-y-1.5 text-xs sm:text-sm">
@@ -67,7 +67,7 @@ function Footer() {
 
           {/* Cột 3: Kết nối */}
           <div className="text-center md:text-right">
-            <h3 className="font-semibold text-orange-500 text-base mb-3">
+            <h3 className="font-semibold text-orange-700 text-base mb-3">
               Kết nối với FUTA Bus Lines
             </h3>
             <div className="flex justify-center md:justify-end space-x-4">

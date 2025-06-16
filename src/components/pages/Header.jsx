@@ -70,7 +70,7 @@ function Header() {
   return (
     <header className="font-sans shadow-md">
       {/* PHẦN 1: THANH TRÊN CÙNG */}
-      <div className="bg-orange-500 text-white">
+      <div className=" text-white" style={{ backgroundColor: "#FEA526" }}>
         <div className="container mx-auto px-4 flex justify-center items-center gap-x-8 h-20 ">
           <div className="flex justify-start">
             <div className="flex items-center gap-2 text-sm">
@@ -179,7 +179,7 @@ function Header() {
       </div>
 
       {/* PHẦN 2: THANH ĐIỀU HƯỚNG CHÍNH */}
-      <nav className="bg-orange-500 pb-8 text-white">
+      <nav className="bg-gradient-to-b from-[#FFA726] to-[#F4511E] pb-8 text-white">
         <div className="container mx-auto -mt-10 px-4 py-10">
           <ul className="flex justify-center items-center gap-8 font-bold text-sm">
             {navItems.map((item) => (
@@ -194,6 +194,13 @@ function Header() {
                 ) : item === "LIÊN HỆ" ? (
                   <Link
                     to="/lien-he"
+                    className="py-3 block border-b-2 border-transparent hover:border-b-2 hover:border-white"
+                  >
+                    {item}
+                  </Link>
+                ) : item === "VỀ CHÚNG TÔI" ? (
+                  <Link
+                    to="/ve-chung-toi"
                     className="py-3 block border-b-2 border-transparent hover:border-b-2 hover:border-white"
                   >
                     {item}
