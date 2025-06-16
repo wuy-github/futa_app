@@ -6,7 +6,6 @@ import PopularRoutesSection from "./PopularRoutesSection";
 import CompanyStatsSection from "./CompanyStatsSection";
 import NewsSection from "./NewsSection";
 import ConnectFutaGroupSection from "./ConnectFutaGroupSection";
-import Footer from "./Footer";
 
 function Homepage() {
   return (

@@ -205,6 +205,13 @@ function Header() {
                   >
                     {item}
                   </Link>
+                ) : item === "TRA CỨU VÉ" ? (
+                  <Link
+                    to="/tra-cuu-ve"
+                    className="py-3 block border-b-2 border-transparent hover:border-b-2 hover:border-white"
+                  >
+                    {item}
+                  </Link>
                 ) : (
                   <a
                     href="#"
