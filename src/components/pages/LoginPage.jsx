@@ -151,7 +151,6 @@ function LoginPage() {
       return;
     }
 
-    // Nếu mọi thứ hợp lệ, xóa lỗi (nếu có) và tiếp tục
     setAgreedToTermsError("");
     console.log("Final Register attempt:", {
       regFullName,
