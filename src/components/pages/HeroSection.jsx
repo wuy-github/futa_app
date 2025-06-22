@@ -1,6 +1,10 @@
 // src/components/pages/HeroSection.jsx
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import heroBannerImage from "../../assets/baner-header.png";
+import ChinhSach from "../search/ChinhSach";
+import TrungChuyen from "../search/TrungChuyen";
+import LichTrinh from "../search/LichTrinh";
+import result from "../../assets/result.jpg";
 import {
   FaExchangeAlt,
   FaChevronDown,
@@ -15,28 +19,61 @@ import { IoBusOutline } from "react-icons/io5";
 import DatePicker, { registerLocale } from "react-datepicker";
 import vi from "date-fns/locale/vi";
 import "react-datepicker/dist/react-datepicker.css";
-import ChinhSach from "../search/ChinhSach";
-import TrungChuyen from "../search/TrungChuyen";
 
 registerLocale("vi", vi);
 
-// --- DỮ LIỆU MẪU ĐÃ ĐƯỢC CẬP NHẬT ---
+// --- DỮ LIỆU ---
+const createSeatLayout = () => {
+  const layout = { lowerDeck: [], upperDeck: [] };
+  const rows = ["A", "B"];
+
+  rows.forEach((row) => {
+    const deck = row === "A" ? "lowerDeck" : "upperDeck";
+    for (let i = 1; i <= 17; i++) {
+      layout[deck].push({
+        id: `${row}${String(i).padStart(2, "0")}`,
+        status: Math.random() > 0.6 ? "sold" : "available",
+      });
+    }
+  });
+  return layout;
+};
+
 const mockTripData = [
-  // Tuyến TP. Hồ Chí Minh -> An Giang
   {
     id: 1,
     origin: "TP. Hồ Chí Minh",
     destination: "An Giang",
-    departureTime: "05:00",
-    arrivalTime: "09:00",
+    departureTime: "07:00",
+    arrivalTime: "11:00",
     duration: "4 giờ",
     busType: "Limousine",
-    pickupPoint: "VP Sài Gòn",
-    dropoffPoint: "Châu Đốc",
-    price: "200.000",
-    seatsLeft: 10,
-    seatClass: "Hàng đầu",
+    pickupPoint: "Bến Xe Miền Tây",
+    dropoffPoint: "Tân Châu - An Giang",
+    price: "190.000",
+    seatsLeft: 28,
+    seatClass: "Hàng giữa",
     deck: "Tầng trên",
+    itinerary: [
+      {
+        time: "07:00",
+        name: "BX Miền Tây",
+        address:
+          "VP BX Miền Tây: 395 Kinh Dương Vương, P.An Lạc, Q.Bình Tân, TP.HCM",
+      },
+      {
+        time: "05:30",
+        name: "Bệnh Viện Ung Bướu",
+        address: "68 Nơ Trang Long, Phường 14, Quận Bình Thạnh, TP.HCM",
+      },
+      {
+        time: "06:00",
+        name: "205 Phạm Ngũ Lão",
+        address:
+          "VP Phạm Ngũ Lão: 205 Phạm Ngũ Lão, P.Phạm Ngũ Lão, Q.1, TP.HCM",
+      },
+    ],
+    seats: createSeatLayout(),
   },
   {
     id: 2,
@@ -52,54 +89,9 @@ const mockTripData = [
     seatsLeft: 25,
     seatClass: "Hàng giữa",
     deck: "Tầng dưới",
+    itinerary: [],
+    seats: createSeatLayout(),
   },
-  {
-    id: 3,
-    origin: "TP. Hồ Chí Minh",
-    destination: "An Giang",
-    departureTime: "07:00",
-    arrivalTime: "11:00",
-    duration: "4 giờ",
-    busType: "Limousine",
-    pickupPoint: "Bến Xe Miền Tây",
-    dropoffPoint: "Tân Châu",
-    price: "190.000",
-    seatsLeft: 34,
-    seatClass: "Hàng giữa",
-    deck: "Tầng trên",
-  },
-  {
-    id: 4,
-    origin: "TP. Hồ Chí Minh",
-    destination: "An Giang",
-    departureTime: "09:30",
-    arrivalTime: "14:30",
-    duration: "5 giờ",
-    busType: "Giường",
-    pickupPoint: "VP Sài Gòn",
-    dropoffPoint: "Châu Đốc",
-    price: "180.000",
-    seatsLeft: 11,
-    seatClass: "Hàng cuối",
-    deck: "Tầng trên",
-  },
-  {
-    id: 12,
-    origin: "TP. Hồ Chí Minh",
-    destination: "An Giang",
-    departureTime: "23:00",
-    arrivalTime: "03:00",
-    duration: "4 giờ",
-    busType: "Ghế",
-    pickupPoint: "An Sương",
-    dropoffPoint: "Châu Đốc",
-    price: "150.000",
-    seatsLeft: 40,
-    seatClass: null,
-    deck: null,
-  },
-
-  // Tuyến mới: Đà Nẵng -> Cần Thơ
   {
     id: 13,
     origin: "Đà Nẵng",
@@ -114,150 +106,211 @@ const mockTripData = [
     seatsLeft: 20,
     seatClass: "Hàng giữa",
     deck: "Tầng dưới",
-  },
-  {
-    id: 14,
-    origin: "Đà Nẵng",
-    destination: "Cần Thơ",
-    departureTime: "19:00",
-    arrivalTime: "05:00",
-    duration: "10 giờ",
-    busType: "Limousine",
-    pickupPoint: "VP Hải Châu",
-    dropoffPoint: "VP Ninh Kiều",
-    price: "550.000",
-    seatsLeft: 15,
-    seatClass: "Hàng đầu",
-    deck: "Tầng trên",
+    itinerary: [],
+    seats: createSeatLayout(),
   },
 ];
 
 const locationsData = [
   { id: "AG", name: "An Giang" },
-  { id: "BL", name: "Bạc Liêu" },
-  { id: "BRVT", name: "Bà Rịa – Vũng Tàu" },
-  { id: "BG", name: "Bắc Giang" },
-  { id: "BK", name: "Bắc Kạn" },
-  { id: "BN", name: "Bắc Ninh" },
-  { id: "BDT", name: "Bến Tre" },
-  { id: "BD", name: "Bình Dương" },
-  { id: "BDH", name: "Bình Định" },
-  { id: "BP", name: "Bình Phước" },
-  { id: "BTH", name: "Bình Thuận" },
-  { id: "CM", name: "Cà Mau" },
-  { id: "CT", name: "Cần Thơ" },
-  { id: "CB", name: "Cao Bằng" },
-  { id: "DN", name: "Đà Nẵng" },
-  { id: "DL", name: "Đắk Lắk" },
-  { id: "DKN", name: "Đắk Nông" },
-  { id: "DBP", name: "Điện Biên" },
-  { id: "DNI", name: "Đồng Nai" },
-  { id: "DTH", name: "Đồng Tháp" },
-  { id: "GL", name: "Gia Lai" },
-  { id: "HGI", name: "Hà Giang" },
-  { id: "HNA", name: "Hà Nam" },
-  { id: "HNO", name: "Hà Nội" },
-  { id: "HTI", name: "Hà Tĩnh" },
-  { id: "HD", name: "Hải Dương" },
-  { id: "HP", name: "Hải Phòng" },
-  { id: "HUG", name: "Hậu Giang" },
-  { id: "HB", name: "Hòa Bình" },
   { id: "HCM", name: "TP. Hồ Chí Minh" },
-  { id: "HY", name: "Hưng Yên" },
-  { id: "KH", name: "Khánh Hòa" },
-  { id: "KG", name: "Kiên Giang" },
-  { id: "KT", name: "Kon Tum" },
-  { id: "LCH", name: "Lai Châu" },
-  { id: "LD", name: "Lâm Đồng" },
-  { id: "LS", name: "Lạng Sơn" },
-  { id: "LCA", name: "Lào Cai" },
-  { id: "LA", name: "Long An" },
-  { id: "NDH", name: "Nam Định" },
-  { id: "NA", name: "Nghệ An" },
-  { id: "NB", name: "Ninh Bình" },
-  { id: "NTH", name: "Ninh Thuận" },
-  { id: "PT", name: "Phú Thọ" },
-  { id: "PY", name: "Phú Yên" },
-  { id: "QB", name: "Quảng Bình" },
-  { id: "QNM", name: "Quảng Nam" },
-  { id: "QNG", name: "Quảng Ngãi" },
-  { id: "QNH", name: "Quảng Ninh" },
-  { id: "QT", name: "Quảng Trị" },
-  { id: "ST", name: "Sóc Trăng" },
-  { id: "SL", name: "Sơn La" },
-  { id: "TNH", name: "Tây Ninh" },
-  { id: "TB", name: "Thái Bình" },
-  { id: "TNN", name: "Thái Nguyên" },
-  { id: "TH", name: "Thanh Hóa" },
-  { id: "TTH", name: "Thừa Thiên Huế" },
-  { id: "TG", name: "Tiền Giang" },
-  { id: "TV", name: "Trà Vinh" },
-  { id: "TQ", name: "Tuyên Quang" },
-  { id: "VL", name: "Vĩnh Long" },
-  { id: "VP", name: "Vĩnh Phúc" },
-  { id: "YB", name: "Yên Bái" },
+  { id: "DN", name: "Đà Nẵng" },
+  { id: "CT", name: "Cần Thơ" },
 ];
-
 const timeOptions = [
-  { id: "sang_som", label: "Sáng sớm 00:00 - 06:00 (14)", range: [0, 6] },
-  { id: "buoi_sang", label: "Buổi sáng 06:00 - 12:00 (31)", range: [6, 12] },
-  { id: "buoi_chieu", label: "Buổi chiều 12:00 - 18:00 (28)", range: [12, 18] },
-  { id: "buoi_toi", label: "Buổi tối 18:00 - 24:00 (27)", range: [18, 24] },
+  { id: "sang_som", label: "Sáng sớm 00:00 - 06:00", range: [0, 6] },
+  { id: "buoi_sang", label: "Buổi sáng 06:00 - 12:00", range: [6, 12] },
+  { id: "buoi_chieu", label: "Buổi chiều 12:00 - 18:00", range: [12, 18] },
+  { id: "buoi_toi", label: "Buổi tối 18:00 - 24:00", range: [18, 24] },
 ];
 const busTypeOptions = ["Ghế", "Giường", "Limousine"];
 const seatClassOptions = ["Hàng đầu", "Hàng giữa", "Hàng cuối"];
 const deckOptions = ["Tầng trên", "Tầng dưới"];
 
-// --- CÁC COMPONENT CON ---
-
 function NoResultsFound() {
   return (
     <div className="bg-white p-8 rounded-lg shadow-sm text-center flex flex-col items-center justify-center h-full min-h-[400px]">
       <img
-        src="https://storage.googleapis.com/futa-busline-cms-dev/image_a2101f4672/image_a2101f4672.svg"
+        src={result}
         alt="Không tìm thấy kết quả"
         className="w-40 h-40 mb-4"
       />
-      <p className="font-semibold text-gray-700">
+      <p className="font-semibold text-black-700">
         Không có kết quả được tìm thấy
       </p>
-      <p className="text-sm text-gray-500 mt-1">
+      <p className="text-sm text-black-500 mt-1">
         Vui lòng thử lại hoặc thay đổi bộ lọc của bạn.
       </p>
     </div>
   );
 }
 
+function SeatSelection({ seats, selectedSeats, onSeatSelect, price }) {
+  const getSeatClass = (status, id) => {
+    if (status === "sold")
+      return "bg-black-200 text-black-400 cursor-not-allowed";
+    if (selectedSeats.includes(id))
+      return "bg-pink-200 border-pink-500 text-pink-600";
+    return "bg-blue-100 border-blue-300 hover:bg-blue-200 cursor-pointer";
+  };
+
+  const renderDeck = (deckSeats) => {
+    const seatCols = { col1: [], col2: [], col3: [] };
+    deckSeats.forEach((seat) => {
+      const seatNum = parseInt(seat.id.substring(1));
+      if ([1, 3, 6, 9, 12, 15].includes(seatNum)) seatCols.col1.push(seat);
+      else if ([2, 5, 8, 11, 14, 17].includes(seatNum))
+        seatCols.col3.push(seat);
+      else seatCols.col2.push(seat);
+    });
+    return (
+      <div className="flex justify-center gap-4">
+        <div className="flex flex-col gap-2">
+          {seatCols.col1.map((seat) => (
+            <button
+              key={seat.id}
+              onClick={() => seat.status !== "sold" && onSeatSelect(seat.id)}
+              disabled={seat.status === "sold"}
+              className={`w-14 h-8 text-xs font-semibold border rounded-md flex items-center justify-center ${getSeatClass(
+                seat.status,
+                seat.id
+              )}`}
+            >
+              {seat.id}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-col gap-2">
+          {seatCols.col2.map((seat) => (
+            <button
+              key={seat.id}
+              onClick={() => seat.status !== "sold" && onSeatSelect(seat.id)}
+              disabled={seat.status === "sold"}
+              className={`w-14 h-8 text-xs font-semibold border rounded-md flex items-center justify-center ${getSeatClass(
+                seat.status,
+                seat.id
+              )}`}
+            >
+              {seat.id}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-col gap-2">
+          {seatCols.col3.map((seat) => (
+            <button
+              key={seat.id}
+              onClick={() => seat.status !== "sold" && onSeatSelect(seat.id)}
+              disabled={seat.status === "sold"}
+              className={`w-14 h-8 text-xs font-semibold border rounded-md flex items-center justify-center ${getSeatClass(
+                seat.status,
+                seat.id
+              )}`}
+            >
+              {seat.id}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const calculateTotalPrice = () => {
+    const priceValue = parseFloat(price.replace(/\./g, ""));
+    return (priceValue * selectedSeats.length).toLocaleString("vi-VN");
+  };
+
+  return (
+    <div className="bg-slate-50 p-6 mt-4 rounded-lg border">
+      <div className="flex justify-center items-center gap-6 mb-6 text-sm">
+        <div className="flex items-center">
+          <div className="w-5 h-4 rounded-sm bg-black-200 mr-2 border border-black-300"></div>
+          <span>Đã bán</span>
+        </div>
+        <div className="flex items-center">
+          <div className="w-5 h-4 rounded-sm bg-blue-100 mr-2 border border-blue-300"></div>
+          <span>Còn trống</span>
+        </div>
+        <div className="flex items-center">
+          <div className="w-5 h-4 rounded-sm bg-pink-200 mr-2 border border-pink-400"></div>
+          <span>Đang chọn</span>
+        </div>
+      </div>
+      <div className="flex justify-around">
+        <div>
+          <h4 className="font-semibold text-center mb-3 text-black-700">
+            Tầng dưới
+          </h4>
+          {renderDeck(seats.lowerDeck)}
+        </div>
+        <div>
+          <h4 className="font-semibold text-center mb-3 text-black-700">
+            Tầng trên
+          </h4>
+          {renderDeck(seats.upperDeck)}
+        </div>
+      </div>
+      {selectedSeats.length > 0 && (
+        <div className="mt-6 pt-4 border-t flex justify-between items-center">
+          <div>
+            <p className="text-sm font-semibold">{selectedSeats.length} Vé</p>
+            <p className="text-red-500 font-bold text-lg">
+              {selectedSeats.join(", ")}
+            </p>
+          </div>
+          <div className="text-left">
+            <p className="text-sm text-black font-bold">Tổng tiền</p>
+            <p className="font-bold text-xl text-red-500">
+              {calculateTotalPrice()}đ
+            </p>
+          </div>
+          <button className="bg-orange-500 text-white font-semibold text-sm px-10 py-2.5 rounded-md hover:bg-orange-600 transition-colors">
+            Chọn
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TripCard({ trip }) {
   const [activeTab, setActiveTab] = useState(null);
+  const [selectedSeats, setSelectedSeats] = useState([]);
   const handleTabClick = (tabName) => {
     setActiveTab((prev) => (prev === tabName ? null : tabName));
   };
-  const linkBaseStyle = "hover:text-orange-500 transition-colors pb-1";
+  const handleSeatSelect = (seatId) => {
+    setSelectedSeats((prev) =>
+      prev.includes(seatId)
+        ? prev.filter((s) => s !== seatId)
+        : [...prev, seatId]
+    );
+  };
+  const linkBaseStyle =
+    "hover:text-orange-500 transition-colors pb-1 cursor-pointer";
   const activeLinkStyle =
     "text-orange-500 border-b-2 border-orange-500 font-semibold";
   return (
-    <div className="bg-white rounded-lg shadow-sm p-5 mb-4 border border-gray-100 hover:shadow-md transition-shadow duration-200">
+    <div className="bg-white rounded-lg shadow-sm p-5 mb-4 border border-black-100 hover:shadow-md transition-shadow duration-200">
       <div className="grid grid-cols-12 gap-x-2 items-center">
         <div className="col-span-2">
-          <p className="font-bold text-xl text-gray-800">
+          <p className="font-bold text-xl text-black-800">
             {trip.departureTime}
           </p>
         </div>
         <div className="col-span-3 text-center">
-          <div className="relative w-full h-px bg-gray-200">
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-gray-400 border-2 border-white"></div>
-            <FaArrowRight className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 text-gray-400 text-xs bg-white px-1" />
+          <div className="relative w-full h-px bg-black-200">
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-black-400 border-2 border-white"></div>
+            <FaArrowRight className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 text-black-400 text-xs bg-white px-1" />
             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-orange-500 border-2 border-white"></div>
           </div>
-          <p className="text-xs text-gray-500 mt-1.5">{trip.duration}</p>
+          <p className="text-xs text-black-500 mt-1.5">{trip.duration}</p>
         </div>
         <div className="col-span-2">
-          <p className="font-bold text-xl text-gray-800 text-left">
+          <p className="font-bold text-xl text-black-800 text-left">
             {trip.arrivalTime}
           </p>
         </div>
-        <div className="col-span-3 text-gray-600 text-sm">
+        <div className="col-span-3 text-black-600 text-sm">
           <p>• {trip.busType}</p>
         </div>
         <div className="col-span-2 text-right">
@@ -266,24 +319,23 @@ function TripCard({ trip }) {
       </div>
       <div className="grid grid-cols-12 gap-x-2 items-center -mt-2">
         <div className="col-span-2">
-          <p className="text-sm text-gray-600 font-medium">
+          <p className="text-sm text-black-600 font-medium">
             {trip.pickupPoint}
           </p>
         </div>
         <div className="col-span-3"></div>
         <div className="col-span-2">
-          <p className="text-sm text-gray-600 font-medium text-left">
+          <p className="text-sm text-black-600 font-medium text-left">
             {trip.dropoffPoint}
           </p>
         </div>
-        <div className="col-span-3 text-gray-600 text-sm">
+        <div className="col-span-3 text-black-600 text-sm">
           <p>• {trip.seatsLeft} chỗ trống</p>
         </div>
       </div>
       <div className="flex justify-between items-center mt-4 pt-4 border-t border-dashed">
-        <div className="flex gap-x-5 text-sm font-medium text-gray-700">
+        <div className="flex gap-x-5 text-sm font-medium text-black-700">
           <a
-            href="/#"
             onClick={(e) => {
               e.preventDefault();
               handleTabClick("chon_ghe");
@@ -295,7 +347,6 @@ function TripCard({ trip }) {
             Chọn ghế
           </a>
           <a
-            href="/#"
             onClick={(e) => {
               e.preventDefault();
               handleTabClick("lich_trinh");
@@ -307,7 +358,6 @@ function TripCard({ trip }) {
             Lịch trình
           </a>
           <a
-            href="/#"
             onClick={(e) => {
               e.preventDefault();
               handleTabClick("trung_chuyen");
@@ -319,7 +369,6 @@ function TripCard({ trip }) {
             Trung chuyển
           </a>
           <a
-            href="/#"
             onClick={(e) => {
               e.preventDefault();
               handleTabClick("chinh_sach");
@@ -331,19 +380,28 @@ function TripCard({ trip }) {
             Chính sách
           </a>
         </div>
-        <button className="bg-orange-100 text-orange-600 border border-orange-500 font-semibold text-sm px-8 py-2 rounded-md hover:bg-orange-500 hover:text-white transition-all">
+        <button className="bg-orange-100 text-orange-600 border border-orange-500 font-semibold text-sm px-8 py-2 rounded-4xl hover:bg-orange-500 hover:text-white transition-all">
           Chọn chuyến
         </button>
       </div>
-      {activeTab === "chinh_sach" && <ChinhSach />}
+      {activeTab === "chon_ghe" && (
+        <SeatSelection
+          seats={trip.seats}
+          selectedSeats={selectedSeats}
+          onSeatSelect={handleSeatSelect}
+          price={trip.price}
+        />
+      )}
+      {activeTab === "lich_trinh" && <LichTrinh itinerary={trip.itinerary} />}
       {activeTab === "trung_chuyen" && <TrungChuyen />}
+      {activeTab === "chinh_sach" && <ChinhSach />}
     </div>
   );
 }
 
 function FiltersSidebar({ activeFilters, onFilterChange }) {
   const filterButtonStyle =
-    "w-full text-center px-2 py-2 border rounded-md text-sm hover:border-orange-500 hover:text-orange-500 transition-colors cursor-pointer";
+    "w-full text-center px-2 py-2 border rounded-2xl text-sm  hover:border-orange-500 hover:bg-orange-500 hover:text-white transition-colors cursor-pointer";
   const activeFilterButtonStyle =
     "bg-orange-100 text-orange-600 border-orange-500";
   const handleFilterClick = (filterType, value) => {
@@ -354,13 +412,13 @@ function FiltersSidebar({ activeFilters, onFilterChange }) {
     onFilterChange(filterType, newValues);
   };
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200 h-fit">
+    <div className="bg-white rounded-lg shadow-sm p-4 border border-black-200 h-fit">
       <div className="flex justify-between items-center mb-4 pb-3 border-b">
-        <h3 className="font-bold text-gray-800 uppercase">Bộ lọc tìm kiếm</h3>
+        <h3 className="font-bold text-black-800 uppercase">Bộ lọc tìm kiếm</h3>
         <button className="text-sm text-red-500 hover:underline">Bỏ lọc</button>
       </div>
       <div className="mb-6">
-        <h4 className="font-semibold text-sm mb-3 text-gray-700">Giờ đi</h4>
+        <h4 className="font-semibold text-sm mb-3 text-black-700">Giờ đi</h4>
         <ul className="space-y-3">
           {timeOptions.map((option) => (
             <li key={option.id} className="flex items-center">
@@ -369,11 +427,11 @@ function FiltersSidebar({ activeFilters, onFilterChange }) {
                 id={option.id}
                 checked={activeFilters.times.includes(option.id)}
                 onChange={() => handleFilterClick("times", option.id)}
-                className="h-4 w-4 rounded border-gray-300 accent-orange-500 cursor-pointer"
+                className="h-4 w-4 rounded-xl border-black-300 accent-orange-500 cursor-pointer"
               />
               <label
                 htmlFor={option.id}
-                className="ml-2.5 text-sm text-gray-600 cursor-pointer"
+                className="ml-2.5 text-sm text-black-600 cursor-pointer"
               >
                 {option.label}
               </label>
@@ -382,7 +440,7 @@ function FiltersSidebar({ activeFilters, onFilterChange }) {
         </ul>
       </div>
       <div className="mb-6">
-        <h4 className="font-semibold text-sm mb-3 text-gray-700">Loại xe</h4>
+        <h4 className="font-semibold text-sm mb-3 text-black-700">Loại xe</h4>
         <div className="grid grid-cols-3 gap-2">
           {busTypeOptions.map((type) => (
             <button
@@ -400,7 +458,7 @@ function FiltersSidebar({ activeFilters, onFilterChange }) {
         </div>
       </div>
       <div className="mb-6">
-        <h4 className="font-semibold text-sm mb-3 text-gray-700">Hạng ghế</h4>
+        <h4 className="font-semibold text-sm mb-3 text-black-700">Hạng ghế</h4>
         <div className="grid grid-cols-3 gap-2">
           {seatClassOptions.map((opt) => (
             <button
@@ -418,7 +476,7 @@ function FiltersSidebar({ activeFilters, onFilterChange }) {
         </div>
       </div>
       <div>
-        <h4 className="font-semibold text-sm mb-3 text-gray-700">Tầng</h4>
+        <h4 className="font-semibold text-sm mb-3 text-black-700">Tầng</h4>
         <div className="grid grid-cols-2 gap-2">
           {deckOptions.map((opt) => (
             <button
@@ -445,13 +503,13 @@ function SearchResultsSection({
   onFilterChange,
 }) {
   const sortButtonStyle =
-    "flex items-center gap-2 px-4 py-2 border rounded-full text-sm text-gray-700 hover:border-orange-500 hover:text-orange-500 transition-colors cursor-pointer";
+    "flex items-center gap-2 px-4 py-2 border rounded-full text-sm text-black-700 hover:border-orange-500 hover:text-orange-500 transition-colors cursor-pointer";
   return (
-    <section className="container mx-auto max-w-7xl px-4 py-8 bg-gray-50">
+    <section className="container mx-auto max-w-7xl px-4 py-8 bg-black-50">
       <div className="mb-4">
-        <h2 className="text-xl font-bold text-gray-800">
+        <h2 className="text-xl font-bold text-black-800">
           {origin} - {destination}{" "}
-          <span className="text-gray-500 font-medium">
+          <span className="text-black-500 font-medium">
             ({results.length} chuyến)
           </span>
         </h2>
@@ -489,19 +547,19 @@ function SearchResultsSection({
 const CustomDateInput = React.forwardRef(
   ({ value, onClick, placeholder, dayOfWeekInfo }, ref) => (
     <div
-      className="w-full p-3 h-16 bg-white border border-gray-300 rounded-lg shadow-sm flex flex-col justify-center text-left cursor-pointer hover:border-orange-400 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500"
+      className="w-full p-3 h-16 bg-white border border-black-300 rounded-lg shadow-sm flex flex-col justify-center text-left cursor-pointer hover:border-orange-400 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500"
       onClick={onClick}
       ref={ref}
     >
       <span
         className={`text-sm md:text-base leading-tight ${
-          value ? "text-gray-700" : "text-gray-400"
+          value ? "text-black-700" : "text-black-400"
         }`}
       >
         {value || placeholder}
       </span>
       {value && dayOfWeekInfo && (
-        <span className="text-gray-500 text-xs leading-tight">
+        <span className="text-black-500 text-xs leading-tight">
           {dayOfWeekInfo}
         </span>
       )}
@@ -657,7 +715,7 @@ function HeroSection() {
                   className={`flex items-center cursor-pointer text-sm font-medium ${
                     tripType === "one-way"
                       ? "text-orange-600"
-                      : "text-gray-500 hover:text-orange-500"
+                      : "text-black-500 hover:text-orange-500"
                   }`}
                 >
                   <input
@@ -677,7 +735,7 @@ function HeroSection() {
                   className={`flex items-center cursor-pointer text-sm font-medium ${
                     tripType === "round-trip"
                       ? "text-orange-600"
-                      : "text-gray-500 hover:text-orange-500"
+                      : "text-black-500 hover:text-orange-500"
                   }`}
                 >
                   <input
@@ -700,7 +758,7 @@ function HeroSection() {
               </a>
             </div>
             <form onSubmit={handleSubmit} id="bookingForm">
-              <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 md:gap-4 items-start mb-10 text-gray-700">
+              <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 md:gap-4 items-start mb-10 text-black-700">
                 <div
                   className={`relative ${
                     tripType === "round-trip"
@@ -709,38 +767,38 @@ function HeroSection() {
                   }`}
                   ref={originDropdownRef}
                 >
-                  <label className="block text-left text-xs font-semibold text-gray-500 mb-1">
+                  <label className="block text-left text-xs font-semibold text-black-500 mb-1">
                     Điểm đi
                   </label>
                   <div
                     onClick={toggleOriginDropdown}
-                    className="w-full p-3 h-16 flex items-center justify-between text-left bg-white border border-gray-300 rounded-lg shadow-sm cursor-pointer hover:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    className="w-full p-3 h-16 flex items-center justify-between text-left bg-white border border-black-300 rounded-lg shadow-sm cursor-pointer hover:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-500"
                   >
                     <span
                       className={
                         origin
-                          ? "text-gray-700 text-sm"
-                          : "text-gray-400 text-sm"
+                          ? "text-black-700 text-sm"
+                          : "text-black-400 text-sm"
                       }
                     >
                       {origin || "Chọn điểm đi"}
                     </span>
                     <FaChevronDown
-                      className={`text-gray-400 transition-transform duration-200 ${
+                      className={`text-black-400 transition-transform duration-200 ${
                         isOriginDropdownOpen ? "rotate-180" : ""
                       }`}
                     />
                   </div>
                   {isOriginDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg z-20 max-h-60 overflow-y-auto">
-                      <div className="p-2 text-xs font-semibold text-gray-500 border-b">
+                    <div className="absolute top-full left-0 mt-1 w-full bg-white border border-black-300 rounded-md shadow-lg z-20 max-h-60 overflow-y-auto">
+                      <div className="p-2 text-xs font-semibold text-black-500 border-b">
                         TỈNH/THÀNH PHỐ
                       </div>
                       <ul>
                         {locationsData.map((loc) => (
                           <li
                             key={loc.id}
-                            className="px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-100 hover:text-orange-600 cursor-pointer"
+                            className="px-3 py-2.5 text-sm text-black-700 hover:bg-orange-100 hover:text-orange-600 cursor-pointer"
                             onClick={() => handleOriginSelect(loc.name)}
                           >
                             {loc.name}
@@ -770,38 +828,38 @@ function HeroSection() {
                   }`}
                   ref={destinationDropdownRef}
                 >
-                  <label className="block text-left text-xs font-semibold text-gray-500 mb-1">
+                  <label className="block text-left text-xs font-semibold text-black-500 mb-1">
                     Điểm đến
                   </label>
                   <div
                     onClick={toggleDestinationDropdown}
-                    className="w-full p-3 h-16 flex items-center justify-between text-left bg-white border border-gray-300 rounded-lg shadow-sm cursor-pointer hover:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    className="w-full p-3 h-16 flex items-center justify-between text-left bg-white border border-black-300 rounded-lg shadow-sm cursor-pointer hover:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-500"
                   >
                     <span
                       className={
                         destination
-                          ? "text-gray-700 text-sm"
-                          : "text-gray-400 text-sm"
+                          ? "text-black-700 text-sm"
+                          : "text-black-400 text-sm"
                       }
                     >
                       {destination || "Chọn điểm đến"}
                     </span>
                     <FaChevronDown
-                      className={`text-gray-400 transition-transform duration-200 ${
+                      className={`text-black-400 transition-transform duration-200 ${
                         isDestinationDropdownOpen ? "rotate-180" : ""
                       }`}
                     />
                   </div>
                   {isDestinationDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg z-20 max-h-60 overflow-y-auto">
-                      <div className="p-2 text-xs font-semibold text-gray-500 border-b">
+                    <div className="absolute top-full left-0 mt-1 w-full bg-white border border-black-300 rounded-md shadow-lg z-20 max-h-60 overflow-y-auto">
+                      <div className="p-2 text-xs font-semibold text-black-500 border-b">
                         TỈNH/THÀNH PHỐ
                       </div>
                       <ul>
                         {locationsData.map((loc) => (
                           <li
                             key={loc.id}
-                            className="px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-100 hover:text-orange-600 cursor-pointer"
+                            className="px-3 py-2.5 text-sm text-black-700 hover:bg-orange-100 hover:text-orange-600 cursor-pointer"
                             onClick={() => handleDestinationSelect(loc.name)}
                           >
                             {loc.name}
@@ -820,7 +878,7 @@ function HeroSection() {
                 >
                   <label
                     htmlFor="departureDatePicker"
-                    className="block text-left text-xs font-semibold text-gray-500 mb-1"
+                    className="block text-left text-xs font-semibold text-black-500 mb-1"
                   >
                     Ngày đi
                   </label>
@@ -847,7 +905,7 @@ function HeroSection() {
                   <div className="md:col-span-2">
                     <label
                       htmlFor="returnDatePicker"
-                      className="block text-left text-xs font-semibold text-gray-500 mb-1"
+                      className="block text-left text-xs font-semibold text-black-500 mb-1"
                     >
                       Ngày về
                     </label>
@@ -877,29 +935,29 @@ function HeroSection() {
                   }`}
                   ref={numTicketsDropdownRef}
                 >
-                  <label className="block text-left text-xs font-semibold text-gray-500 mb-1">
+                  <label className="block text-left text-xs font-semibold text-black-500 mb-1">
                     Số vé
                   </label>
                   <div
                     onClick={toggleNumTicketsDropdown}
-                    className="w-full p-3 h-16 flex items-center justify-between text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm cursor-pointer hover:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    className="w-full p-3 h-16 flex items-center justify-between text-black-700 bg-white border border-black-300 rounded-lg shadow-sm cursor-pointer hover:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-500"
                   >
                     <span className="flex-grow text-center text-sm">
                       {numTickets}
                     </span>
                     <FaChevronDown
-                      className={`text-gray-400 transition-transform duration-200 ${
+                      className={`text-black-400 transition-transform duration-200 ${
                         isNumTicketsDropdownOpen ? "rotate-180" : ""
                       }`}
                     />
                   </div>
                   {isNumTicketsDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg z-20 max-h-48 overflow-y-auto">
+                    <div className="absolute top-full left-0 mt-1 w-full bg-white border border-black-300 rounded-md shadow-lg z-20 max-h-48 overflow-y-auto">
                       <ul>
                         {ticketOptions.map((option) => (
                           <li
                             key={option}
-                            className="px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-100 hover:text-orange-600 cursor-pointer flex justify-between items-center"
+                            className="px-3 py-2.5 text-sm text-black-700 hover:bg-orange-100 hover:text-orange-600 cursor-pointer flex justify-between items-center"
                             onClick={() => handleNumTicketsSelect(option)}
                           >
                             {option}{" "}
@@ -934,6 +992,10 @@ function HeroSection() {
           destination={destination}
           activeFilters={activeFilters}
           onFilterChange={handleFilterChange}
+          timeOptions={timeOptions}
+          busTypeOptions={busTypeOptions}
+          seatClassOptions={seatClassOptions}
+          deckOptions={deckOptions}
         />
       )}
     </>

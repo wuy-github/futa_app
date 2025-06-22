@@ -133,7 +133,6 @@ const routesData = [
 ];
 
 const TimelinePage = () => {
-  // State cho input "điểm đi" và "điểm đến"
   const [fromLocation, setFromLocation] = useState("");
   const [toLocation, setToLocation] = useState("");
   // State cho danh sách tuyến xe đã lọc
