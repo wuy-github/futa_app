@@ -219,6 +219,13 @@ function Header() {
                   >
                     {item}
                   </Link>
+                ) : item === "TIN TỨC" ? (
+                  <Link
+                    to="/tin-tuc"
+                    className="py-3 block border-b-2 border-transparent hover:border-b-2 hover:border-white"
+                  >
+                    {item}
+                  </Link>
                 ) : (
                   <a
                     href="#"
