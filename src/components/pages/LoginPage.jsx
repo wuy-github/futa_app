@@ -1,5 +1,6 @@
 // src/pages/LoginPage.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaPhoneAlt,
   FaLock,
@@ -15,78 +16,153 @@ import TVC from "../../assets/TVC.png";
 
 function LoginPage() {
   const [currentView, setCurrentView] = useState("login");
+  const navigate = useNavigate();
 
-  // State cho form Đăng Nhập
+  // States chung
   const [loginPhoneNumber, setLoginPhoneNumber] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [forgotPasswordInput, setForgotPasswordInput] = useState("");
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState("");
 
-  // State cho form Đăng Ký
+  // States cho Form Đăng Ký đa bước
+  const [registrationStep, setRegistrationStep] = useState(1);
   const [regFullName, setRegFullName] = useState("");
   const [regPhoneNumber, setRegPhoneNumber] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const [isOtpSent, setIsOtpSent] = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
 
-  // State cho Quên Mật Khẩu
-  const [forgotPasswordInput, setForgotPasswordInput] = useState(""); // Có thể là email hoặc SĐT
-  const [forgotPasswordMessage, setForgotPasswordMessage] = useState("");
+  // States cho màn hình xác thực OTP
+  const [otp, setOtp] = useState("");
+  const [otpArray, setOtpArray] = useState(new Array(6).fill(""));
+  const [timer, setTimer] = useState(120);
+  const otpInputRefs = useRef([]);
+
+  // State cho checkbox điều khoản và lỗi của nó
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToTermsError, setAgreedToTermsError] = useState("");
+
+  // Chạy timer khi ở bước nhập OTP
+  useEffect(() => {
+    let interval;
+    if (registrationStep === 2) {
+      setTimer(120);
+      interval = setInterval(() => {
+        setTimer((prevTimer) => {
+          if (prevTimer > 1) {
+            return prevTimer - 1;
+          }
+          clearInterval(interval);
+          return 0;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [registrationStep]);
 
   const handleLoginSubmit = (e) => {
-    /* ... (giữ nguyên) ... */
     e.preventDefault();
+    const phoneRegex = /^0\d{9}$/;
+    if (!phoneRegex.test(loginPhoneNumber)) {
+      alert("Số điện thoại đăng nhập không hợp lệ. Vui lòng kiểm tra lại.");
+      return;
+    }
     console.log("Login attempt:", { loginPhoneNumber, loginPassword });
+    alert("Đăng nhập thành công!");
+    navigate("/");
   };
+
+  // Bước 1 -> Bước 2: Yêu cầu OTP
   const handleSendOtp = () => {
-    /* ... (giữ nguyên) ... */
-    if (!regEmail) {
-      alert("Vui lòng nhập email để nhận OTP.");
+    const phoneRegex = /^0\d{9}$/;
+    if (!regPhoneNumber) {
+      alert("Vui lòng nhập số điện thoại để nhận OTP.");
       return;
     }
-    console.log(`OTP request for email: ${regEmail}`);
-    setIsOtpSent(true);
-    alert(
-      `Mã OTP (giả lập) gồm 6 chữ số đã được gửi đến ${regEmail}. Vui lòng kiểm tra và nhập vào ô OTP.`
-    );
+    if (!phoneRegex.test(regPhoneNumber)) {
+      alert(
+        "Số điện thoại không hợp lệ. Vui lòng nhập 10 chữ số bắt đầu bằng 0."
+      );
+      return;
+    }
+    console.log(`OTP request for phone: ${regPhoneNumber}`);
+    setRegistrationStep(2);
   };
-  const handleRegisterSubmit = (e) => {
-    /* ... (giữ nguyên) ... */
-    e.preventDefault();
-    if (
-      !regFullName ||
-      !regPhoneNumber ||
-      !regEmail ||
-      !regPassword ||
-      !regConfirmPassword
-    ) {
-      alert("Vui lòng điền đầy đủ các trường bắt buộc.");
+
+  // Gửi lại mã OTP
+  const handleResendOtp = () => {
+    console.log(`Resending OTP for phone: ${regPhoneNumber}`);
+    setOtpArray(new Array(6).fill(""));
+    otpInputRefs.current[0]?.focus();
+    setTimer(120);
+  };
+
+  // Xử lý việc nhập các ô OTP
+  const handleOtpChange = (e, index) => {
+    const value = e.target.value;
+    if (isNaN(value)) return;
+    const newOtpArray = [...otpArray];
+    newOtpArray[index] = value.slice(-1);
+    setOtpArray(newOtpArray);
+    if (value && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (e, index) => {
+    if (e.key === "Backspace" && !otpArray[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  // Bước 2 -> Bước 3: Xác thực OTP
+  const handleVerifyOtp = () => {
+    const finalOtp = otpArray.join("");
+    if (finalOtp.length !== 6) {
+      alert("Vui lòng nhập đủ 6 số của mã xác thực.");
       return;
     }
-    if (isOtpSent && !otp) {
-      alert("Vui lòng nhập mã OTP đã được gửi đến email của bạn.");
+    console.log("Verifying OTP:", finalOtp);
+    setOtp(finalOtp);
+    setRegistrationStep(3);
+  };
+
+  // Bước 3: Hoàn tất và gửi form đăng ký
+  const handleRegisterSubmit = (e) => {
+    e.preventDefault();
+    if (registrationStep !== 3) return;
+
+    if (!regFullName || !regPassword || !regConfirmPassword) {
+      alert("Vui lòng điền đầy đủ họ tên và mật khẩu.");
       return;
     }
     if (regPassword !== regConfirmPassword) {
       alert("Mật khẩu và xác nhận mật khẩu không khớp!");
       return;
     }
+    // Sửa lỗi: Chỉ kiểm tra và set lỗi ở đây
     if (!agreedToTerms) {
-      alert("Bạn cần đồng ý với Điều khoản sử dụng và Chính sách bảo mật.");
+      setAgreedToTermsError(
+        "Bạn cần đồng ý với Điều khoản sử dụng và Chính sách bảo mật."
+      );
       return;
     }
-    console.log("Register attempt:", {
+
+    // Nếu mọi thứ hợp lệ, xóa lỗi (nếu có) và tiếp tục
+    setAgreedToTermsError("");
+    console.log("Final Register attempt:", {
       regFullName,
       regPhoneNumber,
       regEmail,
-      otp: isOtpSent ? otp : null,
+      otp,
       regPassword,
       agreedToTerms,
     });
+    alert("Đăng ký tài khoản thành công!");
+    navigate("/"); // Chuyển về trang chủ
   };
 
   const handleForgotPasswordSubmit = (e) => {
@@ -102,25 +178,28 @@ function LoginPage() {
   };
 
   const inputClasses =
-    "w-full pl-10 pr-3 py-3 h-12 sm:h-14 text-sm bg-slate-100 border border-gray-200 rounded-md focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none";
+    "w-full pl-10 pr-3 py-3 h-12 sm:h-14 text-sm bg-slate-100 border border-amber-500 font-semibold rounded-md  focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none";
   const iconClasses =
     "absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none";
   const eyeIconClasses =
     "absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none";
   const primaryButtonClasses =
-    "w-full bg-orange-500 hover:bg-gray-500 text-white font-semibold py-3.5 rounded-4xl shadow-md hover:shadow-lg transition duration-300 text-base";
+    "w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3.5 rounded-4xl shadow-md hover:shadow-lg transition duration-300 text-base cursor-pointer";
 
   return (
     <div className="bg-slate-100 min-h-screen py-10  lg:py-16 flex items-center justify-center">
       <div className="container mx-auto px-4">
         <div className="bg-white rounded-xl shadow-2xl p-6 sm:p-8 md:p-10 lg:p-12 max-w-4xl lg:max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-center">
-            {/* Cột trái: Thông tin quảng bá */}
+            {/* Cột trái: Luôn hiển thị */}
             <div className="text-center md:text-left">
-              <h1 className="text-3xl sm:text-4xl font-bold text-orange-500 mb-2">
+              <h1
+                className="text-3xl sm:text-4xl font-extrabold drop-shadow-[2px_2px_2px_rgba(0,0,0,0.1)] mb-2"
+                style={{ color: "#0D623E" }}
+              >
                 PHƯƠNG TRANG
               </h1>
-              <p className="text-gray-700 mb-6 sm:mb-8 text-base sm:text-lg">
+              <p className="text-amber-700 mb-6 sm:mb-8 text-base sm:text-lg font-semibold">
                 Cùng bạn trên mọi nẻo đường
               </p>
               <div className="w-full h-48 sm:h-56 rounded-md flex items-center justify-center mb-6 md:mb-0 overflow-hidden">
@@ -136,21 +215,24 @@ function LoginPage() {
             <div>
               {currentView !== "forgotPassword" && (
                 <>
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 text-center">
-                    {currentView === "login"
-                      ? "Đăng nhập tài khoản"
-                      : "Tạo tài khoản mới"}
-                  </h2>
+                  {!(currentView === "register" && registrationStep === 2) && (
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 text-center">
+                      {currentView === "login" && "Đăng nhập tài khoản"}
+                      {currentView === "register" &&
+                        registrationStep === 1 &&
+                        "Tạo tài khoản mới"}
+                      {currentView === "register" &&
+                        registrationStep === 3 &&
+                        "Hoàn tất thông tin"}
+                    </h2>
+                  )}
                   <div className="flex mb-6 border-b border-gray-200">
                     <button
-                      onClick={() => {
-                        setCurrentView("login");
-                        setForgotPasswordMessage("");
-                      }}
+                      onClick={() => setCurrentView("login")}
                       className={`flex-1 py-3 text-sm font-medium transition-colors duration-300 focus:outline-none ${
                         currentView === "login"
                           ? "text-orange-500 border-b-2 border-orange-500"
-                          : "text-gray-500 hover:text-gray-700"
+                          : "text-black hover:text-amber-800"
                       }`}
                     >
                       ĐĂNG NHẬP
@@ -158,12 +240,12 @@ function LoginPage() {
                     <button
                       onClick={() => {
                         setCurrentView("register");
-                        setForgotPasswordMessage("");
+                        setRegistrationStep(1);
                       }}
                       className={`flex-1 py-3 text-sm font-medium transition-colors duration-300 focus:outline-none ${
                         currentView === "register"
                           ? "text-orange-500 border-b-2 border-orange-500"
-                          : "text-gray-500 hover:text-gray-700"
+                          : "text-black hover:text-amber-800"
                       }`}
                     >
                       ĐĂNG KÝ
@@ -173,26 +255,35 @@ function LoginPage() {
               )}
 
               {currentView === "login" && (
-                <form onSubmit={handleLoginSubmit}>
-                  <div className="mb-5 relative">
+                <form onSubmit={handleLoginSubmit} className="space-y-5">
+                  <div className="relative ">
                     <FaPhoneAlt className={iconClasses} />
                     <input
                       type="tel"
                       value={loginPhoneNumber}
-                      onChange={(e) => setLoginPhoneNumber(e.target.value)}
+                      onChange={(e) =>
+                        setLoginPhoneNumber(e.target.value.replace(/\D/g, ""))
+                      }
                       placeholder="Nhập số điện thoại"
-                      className={inputClasses}
+                      className={
+                        "w-full pl-10 pr-3 py-3 h-12 sm:h-14 text-sm  border font-semibold border-amber-500 rounded-md focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none"
+                      }
+                      style={{ backgroundColor: "#FEF6F4" }}
                       required
+                      maxLength="10"
                     />
                   </div>
-                  <div className="mb-5 relative">
+                  <div className="relative">
                     <FaLock className={iconClasses} />
                     <input
                       type={showLoginPassword ? "text" : "password"}
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       placeholder="Nhập mật khẩu"
-                      className={`${inputClasses} pr-10`}
+                      className={
+                        "w-full pl-10 pr-3 py-3 h-12 sm:h-14 text-sm  border font-semibold border-amber-500 rounded-md focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none"
+                      }
+                      style={{ backgroundColor: "#FEF6F4" }}
                       required
                     />
                     <button
@@ -216,7 +307,7 @@ function LoginPage() {
                         setCurrentView("forgotPassword");
                         setForgotPasswordMessage("");
                       }}
-                      className="text-xs text-orange-500 hover:underline focus:outline-none"
+                      className="text-xs text-orange-500 hover:underline focus:outline-none cursor-pointer"
                     >
                       Quên mật khẩu?
                     </button>
@@ -226,129 +317,203 @@ function LoginPage() {
 
               {currentView === "register" && (
                 <form onSubmit={handleRegisterSubmit} className="space-y-4">
-                  {/* ... Form đăng ký giữ nguyên các trường đã thêm ... */}
-                  <div className="relative">
-                    <FaUser className={iconClasses} />
-                    <input
-                      type="text"
-                      value={regFullName}
-                      onChange={(e) => setRegFullName(e.target.value)}
-                      placeholder="Họ và tên"
-                      className={inputClasses}
-                      required
-                    />
-                  </div>
-                  <div className="relative">
-                    <FaPhoneAlt className={iconClasses} />
-                    <input
-                      type="tel"
-                      value={regPhoneNumber}
-                      onChange={(e) => setRegPhoneNumber(e.target.value)}
-                      placeholder="Số điện thoại"
-                      className={inputClasses}
-                      required
-                    />
-                  </div>
-                  <div className="relative">
-                    <FaEnvelope className={iconClasses} />
-                    <input
-                      type="email"
-                      value={regEmail}
-                      onChange={(e) => setRegEmail(e.target.value)}
-                      placeholder="Địa chỉ email"
-                      className={inputClasses}
-                      required
-                    />
-                  </div>
-                  {!isOtpSent ? (
-                    <button
-                      type="button"
-                      onClick={handleSendOtp}
-                      disabled={!regEmail}
-                      className="w-full text-sm text-orange-600 hover:text-orange-700 py-2 underline focus:outline-none disabled:text-gray-400 disabled:cursor-not-allowed"
-                    >
-                      Gửi mã OTP
-                    </button>
-                  ) : (
-                    <div className="relative">
-                      <FaKey className={iconClasses} />
-                      <input
-                        type="text"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        placeholder="Nhập mã OTP"
-                        className={`${inputClasses} pr-10`}
-                        required
-                        maxLength={6}
-                      />
+                  {registrationStep === 1 && (
+                    <>
+                      <div className="relative">
+                        <FaPhoneAlt className={iconClasses} />
+                        <input
+                          type="tel"
+                          value={regPhoneNumber}
+                          onChange={(e) =>
+                            setRegPhoneNumber(e.target.value.replace(/\D/g, ""))
+                          }
+                          placeholder="Số điện thoại"
+                          className={inputClasses}
+                          style={{ backgroundColor: "#FEF6F4" }}
+                          required
+                          maxLength="10"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSendOtp}
+                        disabled={!regPhoneNumber}
+                        className={`${primaryButtonClasses} disabled:bg-gray-400 disabled:cursor-not-allowed `}
+                      >
+                        Gửi mã OTP
+                      </button>
+                    </>
+                  )}
+
+                  {registrationStep === 2 && (
+                    <div className="text-center">
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
+                        Nhập mã xác thực
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-6">
+                        Mã xác thực đã được gửi về số{" "}
+                        <span className="font-bold text-green-600">
+                          {regPhoneNumber}
+                        </span>
+                      </p>
+                      <div
+                        className="flex justify-center gap-2 sm:gap-3 mb-6"
+                        dir="ltr"
+                      >
+                        {otpArray.map((digit, index) => (
+                          <input
+                            key={index}
+                            ref={(el) => (otpInputRefs.current[index] = el)}
+                            type="tel"
+                            maxLength="1"
+                            value={digit}
+                            onChange={(e) => handleOtpChange(e, index)}
+                            onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                            className="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-semibold border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition"
+                            required
+                          />
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleVerifyOtp}
+                        className={primaryButtonClasses}
+                      >
+                        Tiếp tục
+                      </button>
+                      <div className="mt-4 text-sm text-gray-500">
+                        <span>{`Thời gian còn lại ${Math.floor(timer / 60)
+                          .toString()
+                          .padStart(2, "0")}:${(timer % 60)
+                          .toString()
+                          .padStart(2, "0")}`}</span>
+                        {timer === 0 && (
+                          <button
+                            type="button"
+                            onClick={handleResendOtp}
+                            className="ml-4 text-orange-500 font-semibold hover:underline"
+                          >
+                            Gửi lại mã
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
-                  <div className="relative">
-                    <FaLock className={iconClasses} />
-                    <input
-                      type={showRegPassword ? "text" : "password"}
-                      value={regPassword}
-                      onChange={(e) => setRegPassword(e.target.value)}
-                      placeholder="Mật khẩu mới"
-                      className={`${inputClasses} pr-10`}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowRegPassword(!showRegPassword)}
-                      className={eyeIconClasses}
-                    >
-                      {showRegPassword ? <FaEyeSlash /> : <FaEye />}
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <FaLock className={iconClasses} />
-                    <input
-                      type={showRegConfirmPassword ? "text" : "password"}
-                      value={regConfirmPassword}
-                      onChange={(e) => setRegConfirmPassword(e.target.value)}
-                      placeholder="Xác nhận mật khẩu mới"
-                      className={`${inputClasses} pr-10`}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowRegConfirmPassword(!showRegConfirmPassword)
-                      }
-                      className={eyeIconClasses}
-                    >
-                      {showRegConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                    </button>
-                  </div>
-                  <div className="mt-5 mb-3">
-                    <label className="flex items-center text-xs text-gray-600">
-                      <input
-                        type="checkbox"
-                        checked={agreedToTerms}
-                        onChange={(e) => setAgreedToTerms(e.target.checked)}
-                        className="mr-2 h-4 w-4 accent-orange-500 rounded border-gray-300 focus:ring-1 focus:ring-orange-400 focus:ring-offset-1"
-                      />
-                      Tôi đồng ý với{" "}
-                      <a
-                        href="#"
-                        className="ml-1 text-orange-500 hover:underline"
-                      >
-                        Điều khoản sử dụng
-                      </a>
-                      &nbsp;và&nbsp;
-                      <a href="#" className="text-orange-500 hover:underline">
-                        Chính sách bảo mật
-                      </a>
-                      .
-                    </label>
-                  </div>
-                  <button type="submit" className={primaryButtonClasses}>
-                    Đăng ký
-                  </button>
+
+                  {registrationStep === 3 && (
+                    <>
+                      <div className="relative">
+                        <FaUser className={iconClasses} />
+                        <input
+                          type="text"
+                          value={regFullName}
+                          onChange={(e) => setRegFullName(e.target.value)}
+                          placeholder="Họ và tên"
+                          className={inputClasses}
+                          style={{ backgroundColor: "#FEF6F4" }}
+                          required
+                        />
+                      </div>
+                      <div className="relative">
+                        <FaEnvelope className={iconClasses} />
+                        <input
+                          type="email"
+                          value={regEmail}
+                          onChange={(e) => setRegEmail(e.target.value)}
+                          placeholder="Địa chỉ email (không bắt buộc)"
+                          className={inputClasses}
+                          style={{ backgroundColor: "#FEF6F4" }}
+                        />
+                      </div>
+                      <div className="relative">
+                        <FaLock className={iconClasses} />
+                        <input
+                          type={showRegPassword ? "text" : "password"}
+                          value={regPassword}
+                          onChange={(e) => setRegPassword(e.target.value)}
+                          placeholder="Mật khẩu mới"
+                          className={`${inputClasses} pr-10`}
+                          style={{ backgroundColor: "#FEF6F4" }}
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowRegPassword(!showRegPassword)}
+                          className={eyeIconClasses}
+                          aria-label="Toggle password visibility"
+                        >
+                          {showRegPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <FaLock className={iconClasses} />
+                        <input
+                          type={showRegConfirmPassword ? "text" : "password"}
+                          value={regConfirmPassword}
+                          onChange={(e) =>
+                            setRegConfirmPassword(e.target.value)
+                          }
+                          placeholder="Xác nhận mật khẩu mới"
+                          className={`${inputClasses} pr-10`}
+                          style={{ backgroundColor: "#FEF6F4" }}
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowRegConfirmPassword(!showRegConfirmPassword)
+                          }
+                          className={eyeIconClasses}
+                          aria-label="Toggle confirm password visibility"
+                        >
+                          {showRegConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                      </div>
+                      <div className="pt-2 pb-1">
+                        <label className="flex items-center text-xs text-black cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={agreedToTerms}
+                            onChange={(e) => {
+                              setAgreedToTerms(e.target.checked);
+                              if (e.target.checked) {
+                                setAgreedToTermsError("");
+                              }
+                            }}
+                            className="mr-2 h-4 w-4 accent-orange-500"
+                          />
+                          Tôi đồng ý với{" "}
+                          <a
+                            href="/#"
+                            onClick={(e) => e.preventDefault()}
+                            className="ml-1 text-orange-500 hover:underline"
+                          >
+                            Điều khoản sử dụng
+                          </a>
+                          &nbsp;và&nbsp;
+                          <a
+                            href="/#"
+                            onClick={(e) => e.preventDefault()}
+                            className="text-orange-500 hover:underline"
+                          >
+                            Chính sách bảo mật
+                          </a>
+                          .
+                        </label>
+                        {agreedToTermsError && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {agreedToTermsError}
+                          </p>
+                        )}
+                      </div>
+                      <button type="submit" className={primaryButtonClasses}>
+                        Đăng ký
+                      </button>
+                    </>
+                  )}
                 </form>
               )}
-              {/* quên mật khẩu  */}
+
               {currentView === "forgotPassword" && (
                 <div>
                   <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 text-center">
@@ -368,11 +533,9 @@ function LoginPage() {
                     onSubmit={handleForgotPasswordSubmit}
                     className="space-y-5"
                   >
-                    {!forgotPasswordMessage && ( // Chỉ hiển thị input nếu chưa có thông báo thành công
+                    {!forgotPasswordMessage && (
                       <div className="relative">
-                        {/* Giả sử người dùng có thể nhập email hoặc SĐT */}
                         <FaEnvelope className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-                        {/* Hoặc <FaPhoneAlt /> nếu bạn muốn chỉ SĐT */}
                         <input
                           type="text"
                           value={forgotPasswordInput}
