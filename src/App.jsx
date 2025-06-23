@@ -11,6 +11,7 @@ import AboutUsPage from "./components/pages/AboutUsPage";
 import TimeLinePage from "./components/pages/TimeLinePage";
 import TicketLookupPage from "./components/pages/TicketLookupPage";
 import NewsPage from "./components/pages/NewsPage";
+import BookingPage from "./components/pages/BookingPage";
 function App() {
   return (
     <BrowserRouter>
@@ -28,6 +29,7 @@ function App() {
             <Route path="/tra-cuu-ve" element={<TicketLookupPage />} />
             <Route path="/lich-trinh" element={<TimeLinePage />} />
             <Route path="/tin-tuc" element={<NewsPage />} />
+            <Route path="/dat-ve" element={<BookingPage />} />
           </Routes>
         </main>
         <Footer />
