@@ -1,6 +1,9 @@
 // src/pages/LoginPage.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaGoogle, FaFacebook } from "react-icons/fa";
+// import { useAuth } from "../../context/AuthContext";
+import { signInWithGoogle, signInWithFacebook } from "../../firebase";
 import {
   FaPhoneAlt,
   FaLock,
@@ -17,7 +20,21 @@ import TVC from "../../assets/TVC.png";
 function LoginPage() {
   const [currentView, setCurrentView] = useState("login");
   const navigate = useNavigate();
+  // const { login } = useAuth();
 
+  // --- THÊM HÀM XỬ LÝ ĐĂNG NHẬP SOCIAL ---
+  const handleSocialLogin = async (loginProvider) => {
+    try {
+      const result = await loginProvider();
+      const user = result.user;
+      console.log("Đăng nhập thành công với user:", user);
+      alert(`Chào mừng ${user.displayName}!`);
+      navigate("/"); // Chuyển về trang chủ sau khi đăng nhập thành công
+    } catch (error) {
+      console.error("Lỗi đăng nhập social:", error);
+      alert(`Đã xảy ra lỗi: ${error.message}`);
+    }
+  };
   // States chung
   const [loginPhoneNumber, setLoginPhoneNumber] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -70,9 +87,16 @@ function LoginPage() {
       alert("Số điện thoại đăng nhập không hợp lệ. Vui lòng kiểm tra lại.");
       return;
     }
-    console.log("Login attempt:", { loginPhoneNumber, loginPassword });
+    // const mockUserData = {
+    //   fullName: "Đặng Quốc Huy",
+    //   phone: loginPhoneNumber,
+    //   email: "quochuyw2610@gmail.com",
+    //   avatarUrl: "https://i.pravatar.cc/150?u=a042581f4e29026704d",
+    // };
+    // login(mockUserData);
+
     alert("Đăng nhập thành công!");
-    navigate("/");
+    navigate("/"); // Chuyển hướng về trang chủ
   };
 
   // Bước 1 -> Bước 2: Yêu cầu OTP
@@ -236,6 +260,7 @@ function LoginPage() {
                     >
                       ĐĂNG NHẬP
                     </button>
+
                     <button
                       onClick={() => {
                         setCurrentView("register");
@@ -299,6 +324,7 @@ function LoginPage() {
                   <button type="submit" className={primaryButtonClasses}>
                     Đăng nhập
                   </button>
+
                   <div className="text-right mt-4">
                     <button
                       type="button"
@@ -310,6 +336,44 @@ function LoginPage() {
                     >
                       Quên mật khẩu?
                     </button>
+                    {/* ===== THÊM PHẦN ĐĂNG NHẬP MẠNG XÃ HỘI VÀO ĐÂY ===== */}
+                    <div className="mt-6">
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                          <span className="px-2 bg-white text-gray-500">
+                            Hoặc tiếp tục với
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Nút đăng nhập Google */}
+                        <button
+                          type="button"
+                          onClick={() => handleSocialLogin(signInWithGoogle)}
+                          className="w-full flex items-center justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                          <FaGoogle className="text-red-500 mr-3" size={20} />
+                          Google
+                        </button>
+
+                        {/* Nút đăng nhập Facebook */}
+                        <button
+                          type="button"
+                          onClick={() => handleSocialLogin(signInWithFacebook)}
+                          className="w-full flex items-center justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                          <FaFacebook
+                            className="text-blue-600 mr-3"
+                            size={20}
+                          />
+                          Facebook
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </form>
               )}

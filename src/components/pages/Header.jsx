@@ -4,6 +4,7 @@ import futaLogo from "../../assets/futa-logo.png";
 import vietnameseFlag from "../../assets/flags/vn.png";
 import englishFlag from "../../assets/flags/my.png";
 import { Link } from "react-router-dom";
+// Trong file: src/components/pages/Header.jsx
 
 function Header() {
   const navItems = [
